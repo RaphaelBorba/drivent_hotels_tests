@@ -11,3 +11,12 @@ export function createRoom(hotelId: number){
         }
     })
 }
+
+export type Room = {
+    id: Number,
+    name: String,
+    capacity: Number,
+    hotelId: Number,
+    createAt: Date,
+    updateAt: Date,
+}

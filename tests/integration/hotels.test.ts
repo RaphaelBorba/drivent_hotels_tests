@@ -1,19 +1,17 @@
 import app, { init } from "@/app"
 import httpStatus from "http-status"
 import supertest from "supertest"
-import { createEnrollmentWithAddress, createPayment, createTicketType, createUser, createTicket } from "../factories"
+import { createEnrollmentWithAddress, createTicketType, createUser, createTicket } from "../factories"
 import { cleanDb, generateValidToken } from "../helpers"
 import * as jwt from "jsonwebtoken";
 import faker from "@faker-js/faker";
-import { TicketStatus } from "@prisma/client"
-import { generateCPF, getStates } from "@brazilian-utils/brazilian-utils"
+import { Hotel, TicketStatus } from "@prisma/client"
+import { createHotel } from "../factories/hotels-factory"
+import { prisma } from "@/config"
 
 
 beforeAll(async () => {
     await init();
-});
-
-beforeEach(async () => {
     await cleanDb();
 });
 
@@ -87,13 +85,38 @@ describe("GET /hotels", () => {
 
             const user = await createUser();
             const token = await generateValidToken(user);
-            const ticketType = await createTicketType();
+            const ticketType = await prisma.ticketType.create({
+                data: {
+                    name: faker.name.findName(),
+                    price: faker.datatype.number(),
+                    isRemote: false,
+                    includesHotel: true,
+                },
+            });
             const enrollment = await createEnrollmentWithAddress(user)
-            await createTicket(enrollment.id, ticketType.id, TicketStatus.RESERVED);
+            await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+            const hotel = await createHotel() as Hotel
+            const hotel2 = await createHotel() as Hotel
 
             const response = await server.get("/hotels").set("Authorization", `Bearer ${token}`);
 
-            expect(response.status).toBe(402)
+            expect(response.status).toBe(200)
+            expect(response.body).toEqual([
+                {
+                    id: hotel.id,
+                    name: hotel.name,
+                    image: hotel.image,
+                    updatedAt: hotel.updatedAt.toISOString(),
+                    createdAt: hotel.createdAt.toISOString(),
+                },
+                {
+                    id: hotel2.id,
+                    name: hotel2.name,
+                    image: hotel2.image,
+                    updatedAt: hotel2.updatedAt.toISOString(),
+                    createdAt: hotel2.createdAt.toISOString(),
+                },
+            ])
         })
 
     });

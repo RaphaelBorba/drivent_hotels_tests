@@ -14,8 +14,6 @@ export async function getHotels(req: AuthenticatedRequest, res: Response) {
 
         const enrollment = await enrollmentRepository.findWithAddressByUserId(userId)
 
-        console.log(enrollment)
-
         if (!enrollment) return res.sendStatus(404)
 
         const ticket = await ticketRepository.findTicketByEnrollmentId(enrollment.id)
@@ -29,7 +27,7 @@ export async function getHotels(req: AuthenticatedRequest, res: Response) {
         const hotels = await getHotelsDB()
 
         if (!hotels) return res.sendStatus(404)
-
+        
         res.status(200).send(hotels)
 
     } catch (error) {
